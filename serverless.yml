@@ -1,0 +1,203 @@
+service: ${opt:application_name, self:custom.variables.application_name, 'Cerberus'}
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: python3.7
+  profile: ${opt:profile}
+  stage: ${opt:stage, 'prod'}
+  apiKeys:
+    - CerberusMasterKey
+  environment:
+    APPLICATION_NAME: ${self:service}
+  stackTags:
+    APPLICATION_NAME: ${self:service}
+
+  usagePlan:
+    quota:
+      limit: 5000
+      offset: 2
+      period: MONTH
+    throttle:
+      burstLimit: 200
+      rateLimit: 100
+
+plugins:
+  - serverless-domain-manager
+
+package:
+  individually: true
+  exclude:
+    - "*/**"
+
+custom:
+  variables: ${file(variables.yaml)}
+  authorizer:
+    name: generate_token_authorizer
+    identitySource: method.request.header.Email, method.request.header.Password, method.request.header.Mfa
+    type: request
+  customDomain:
+    domainName: ${self:custom.variables.domain_name}
+    certificateName: ${self:custom.variables.certificate_name}
+    createRoute53Record: ${self:custom.variables.create_route53_record}
+    endpointType: ${self:custom.variables.endpoint_type}
+    enabled: ${self:custom.variables.enable_custom_domain}
+
+functions:
+  generate_token_authorizer:
+    name: ${self:service}-generate_token_authorizer
+    package:
+      include:
+        - functions/temporary_token/create_temporary_token_authorizer.py
+    handler: functions/temporary_token/create_temporary_token_authorizer.handler
+    role: ${self:service}Permissions
+
+  generate_token:
+    name: ${self:service}-generate_token
+    handler: functions/temporary_token/create_temporary_token.handler
+    role: ${self:service}Permissions
+    package:
+      include:
+        - functions/temporary_token/create_temporary_token.py
+    events:
+      - http:
+          path: /generate_token
+          method: get
+          cors: true
+          private: false
+  invalidate_token:
+    name: ${self:service}-invalidate_token
+    handler: functions/temporary_token/invalidate_token.handler
+    role: ${self:service}Permissions
+    package:
+      include:
+        - functions/temporary_token/invalidate_token.py
+
+  encrypt_secret:
+    name: ${self:service}-encrypt_secret
+    package:
+      include:
+        - functions/encrypt_secret/**
+    handler: functions/encrypt_secret/encrypt_secret.encrypt
+    role: ${self:service}Permissions
+
+  decrypt_secret:
+    name: ${self:service}-decrypt_secret
+    package:
+      include:
+        - functions/decrypt_secret/**
+    handler: functions/decrypt_secret/decrypt_secret.decrypt
+    role: ${self:service}Permissions
+
+  get_secret:
+    name: ${self:service}-get_secret
+    handler: functions/get_secret/get_secret.handler
+    role: ${self:service}Permissions
+    package:
+      include:
+        - functions/get_secret/**
+    events:
+      - http:
+          path: /get_secret
+          method: get
+          cors: true
+          private: true
+
+  add_secret:
+    name: ${self:service}-add_secret
+    handler: functions/add_secret/add_secret.handler
+    role: ${self:service}Permissions
+    package:
+      include:
+        - functions/add_secret/**
+    events:
+      - http:
+          path: /add_secret
+          method: post
+          cors: true
+          private: true
+
+resources:
+  Resources:
+    CerberusPermissions:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${self:service}Permissions
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            -
+              Effect: 'Allow'
+              Principal:
+                Service:
+                  - "lambda.amazonaws.com"
+              Action:
+                - "sts:AssumeRole"
+        Policies:
+          -
+            PolicyName: "LambdaDynamoDB"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                -
+                  Effect: "Allow"
+                  Action: "dynamodb:*"
+                  Resource: "*"
+
+          -
+            PolicyName: "LambdaCloudWatch"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                -
+                  Effect: "Allow"
+                  Action:
+                    - "cloudwatch:*"
+                    - "events:*"
+                    - "logs:*"
+                  Resource: "*"
+
+          -
+            PolicyName: "LambdaApiGateway"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                -
+                  Effect: "Allow"
+                  Action:
+                    - "apigateway:*"
+                  Resource: "*"
+          -
+            PolicyName: "LambdaToLambda"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                -
+                  Effect: "Allow"
+                  Action:
+                    - "lambda:*"
+                  Resource: "*"
+          -
+            PolicyName: "LambdaKms"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                -
+                  Effect: "Allow"
+                  Action:
+                    - "kms:*"
+                  Resource: "*"
+                  #    CerberusTable:
+                  #      Type: AWS::DynamoDB::Table
+                  #      Properties:
+                  #        TableName: CerberusSecrets
+                  #        AttributeDefinitions:
+                  #          - AttributeName: title
+                  #            AttributeType: S
+                  #        KeySchema:
+                  #          - AttributeName: title
+                  #            KeyType: HASH
+                  #            ProvisionedThroughput:
+                  #              ReadCapacityUnits: 1
+                  #              WriteCapacityUnits: 1
+                  #
