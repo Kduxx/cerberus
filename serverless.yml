@@ -187,17 +187,17 @@ resources:
                   Action:
                     - "kms:*"
                   Resource: "*"
-                  #    CerberusTable:
-                  #      Type: AWS::DynamoDB::Table
-                  #      Properties:
-                  #        TableName: CerberusSecrets
-                  #        AttributeDefinitions:
-                  #          - AttributeName: title
-                  #            AttributeType: S
-                  #        KeySchema:
-                  #          - AttributeName: title
-                  #            KeyType: HASH
-                  #            ProvisionedThroughput:
-                  #              ReadCapacityUnits: 1
-                  #              WriteCapacityUnits: 1
-                  #
+    CerberusTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}Secrets
+        AttributeDefinitions:
+          - AttributeName: title
+            AttributeType: S
+        KeySchema:
+          - AttributeName: title
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
