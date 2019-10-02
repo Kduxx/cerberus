@@ -110,9 +110,22 @@ def handler(event, context):
                                 'Success':False,
                                 'Message':'You have to pass a parameter'}})}
 
+def secret_exists(secret_title):
+
+    function_name = '{}-get_secret'.format(os.environ.get('APPLICATION_NAME'))
+    secret = boto3.client('lambda').invoke(
+        FunctionName=function_name,
+        Payload=json.dumps({"queryStringParameters": {"secret_title": secret_title}})
+    )['Payload'].read().decode('utf-8')
+
+    print(json.loads(secret))
+    return True
+
 def add_secret(title, secret=None, description=None, username=None):
 
     if secret:
+        if secret_exists(title):
+            return {'Warning': True, 'Message': 'A secret with this title already exists', 'status_code': 200}
         function_name = '{}-encrypt_secret'.format(os.environ.get('APPLICATION_NAME'))
         secret = boto3.client('lambda').invoke(
             FunctionName=function_name,
@@ -121,7 +134,7 @@ def add_secret(title, secret=None, description=None, username=None):
 
     item_dict = {'title': title, 'description': description, 'username': username, 'secret': secret, 'search_name':title.lower().replace(' ', '_')}
     secrets_table.put_item(Item=item_dict)
-    return {'Success': True, 'Message':'Secret created successfully', 'status_code': 200}
+    return {'Success': True, 'Message':'Secret created successfully', 'status_code': 201}
 
 def generate_secret(size=64):
     secret_characters = string.ascii_letters + string.digits + string.punctuation.replace('\'', '').replace('\"', '')
