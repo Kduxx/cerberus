@@ -1,4 +1,5 @@
 import boto3
+import os
 
 APPLICATION_NAME = os.environ.get('APPLICATION_NAME')
 api_gateway = boto3.client("apigateway")
