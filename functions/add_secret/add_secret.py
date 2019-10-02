@@ -113,10 +113,12 @@ def handler(event, context):
 def add_secret(title, secret=None, description=None, username=None):
 
     if secret:
+        function_name = '{}-encrypt_secret'.format(os.environ.get('APPLICATION_NAME'))
         secret = boto3.client('lambda').invoke(
-            FunctionName='{}-encrypt_secret'.format(os.environ.get('APPLICATION_NAME'),
+            FunctionName=function_name,
             Payload=json.dumps({'secret': secret})
-        ))['Payload'].read().decode('utf-8')
+        )['Payload'].read().decode('utf-8')
+
     item_dict = {'title': title, 'description': description, 'username': username, 'secret': secret, 'search_name':title.lower().replace(' ', '_')}
     secrets_table.put_item(Item=item_dict)
     return {'Success': True, 'Message':'Secret created successfully', 'status_code': 200}
