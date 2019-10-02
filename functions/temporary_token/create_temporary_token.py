@@ -30,11 +30,14 @@ def handler(event, context):
         'body': json.dumps(response_body)
 }
 
+def get_usage_plan_id():
+    return [ x for x in api_gateway.get_usage_plans()['items'] if os.environ.get('APPLICATION_NAME') in x['name']][0]['id']
+
 def create_api_key():
     response = api_gateway.create_api_key(name=DEFAULT_KEY_NAME, enabled=True)
     create_cloudwatch_event(response['createdDate'])
     api_gateway.create_usage_plan_key(
-        usagePlanId='cvsvx8',
+        usagePlanId=get_usage_plan_id(),
         keyId=response['id'],
         keyType='API_KEY'
     )
