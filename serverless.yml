@@ -24,7 +24,7 @@ provider:
 
 plugins:
   - serverless-domain-manager
-
+  - serverless-pseudo-parameters
 package:
   individually: true
   exclude:
@@ -200,4 +200,34 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-
+    CerberusKey:
+      Type: AWS::KMS::Key
+      DeletionPolicy: Retain
+      Description: "The key used to encrypt and decerypt cerberus secrets"
+      Properties:
+        KeyPolicy:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::#{AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Effect: Allow
+            Principal:
+              AWS: '*'
+            Action:
+            - 'kms:Encrypt'
+            - 'kms:Decrypt'
+            - 'kms:ReEncrypt*'
+            - 'kms:GenerateDataKey*'
+            - 'kms:CreateGrant'
+            - 'kms:ListGrants'
+            - 'kms:DescribeKey'
+            Resource: '*'
+    CerberusKeyAlias:
+      DeletionPolicy: Retain
+      Type: 'AWS::KMS::Alias'
+      Properties:
+        AliasName: !Sub 'alias/${self:service}Key'
+        TargetKeyId: !Ref CerberusKey
