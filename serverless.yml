@@ -32,10 +32,6 @@ package:
 
 custom:
   variables: ${file(variables.yaml)}
-  authorizer:
-    name: generate_token_authorizer
-    identitySource: method.request.header.Email, method.request.header.Password, method.request.header.Mfa
-    type: request
   customDomain:
     domainName: ${self:custom.variables.domain_name}
     certificateName: ${self:custom.variables.certificate_name}
@@ -44,35 +40,6 @@ custom:
     enabled: ${self:custom.variables.enable_custom_domain}
 
 functions:
-  generate_token_authorizer:
-    name: ${self:service}-generate_token_authorizer
-    package:
-      include:
-        - functions/temporary_token/create_temporary_token_authorizer.py
-    handler: functions/temporary_token/create_temporary_token_authorizer.handler
-    role: ${self:service}Permissions
-
-  generate_token:
-    name: ${self:service}-generate_token
-    handler: functions/temporary_token/create_temporary_token.handler
-    role: ${self:service}Permissions
-    package:
-      include:
-        - functions/temporary_token/create_temporary_token.py
-    events:
-      - http:
-          path: /generate_token
-          method: get
-          cors: true
-          private: false
-  invalidate_token:
-    name: ${self:service}-invalidate_token
-    handler: functions/temporary_token/invalidate_token.handler
-    role: ${self:service}Permissions
-    package:
-      include:
-        - functions/temporary_token/invalidate_token.py
-
   encrypt_secret:
     name: ${self:service}-encrypt_secret
     package:
