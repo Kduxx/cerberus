@@ -70,13 +70,8 @@ def query_secret(secret_title):
         }
 
 def decrypt_secret(item):
-    secret = boto3.client('lambda').invoke(
-        FunctionName='{}-decrypt_secret'.format(
-            os.environ.get('APPLICATION_NAME'),
-            Payload=json.dumps({'secret': item['secret']})
-        )['Payload'].read().decode('utf-8')
-    )
-
+    function_name = '{}-decrypt_secret'.format(os.environ.get('APPLICATION_NAME'))
+    secret = boto3.client('lambda').invoke(FunctionName=function_name, Payload=json.dumps({'secret': item['secret']}))['Payload'].read().decode('utf-8')
     print(secret)
     item['secret'] = secret
     return item
