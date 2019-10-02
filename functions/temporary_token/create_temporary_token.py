@@ -9,7 +9,9 @@ api_gateway = boto3.client('apigateway')
 lambda_function = boto3.client('lambda')
 cloudwatch_events = boto3.client('events')
 DEFAULT_KEY_NAME = "{}TemporaryKey".format(APPLICATION_NAME)
+
 aws_account = boto3.client('sts').get_caller_identity().get('Account')
+aws_region = boto3.session.Session().region_name
 
 def handler(event, context):
     print('\n')
@@ -47,7 +49,7 @@ def create_cloudwatch_event(created_date):
     limit = created_date + datetime.timedelta(minutes=2, seconds=8)
     rule = cloudwatch_events.put_rule(Name="{}TemporaryKeyLimit".format(APPLICATION_NAME), ScheduleExpression='cron({} {} * * ? *)'.format(limit.minute, limit.hour), State='ENABLED')
     targets = cloudwatch_events.list_targets_by_rule(Rule="{}TemporaryKeyLimit".format(APPLICATION_NAME))
-    target = cloudwatch_events.put_targets(Rule='{}TemporaryKeyLimit'.format(APPLICATION_NAME),Targets=[{'Id':str(int(time.time())), 'Arn':'arn:aws:lambda:us-east-1:197209411573:function:{}-invalidate_token'.format(APPLICATION_NAME)}])
+    target = cloudwatch_events.put_targets(Rule='{}TemporaryKeyLimit'.format(APPLICATION_NAME),Targets=[{'Id':str(int(time.time())), 'Arn':'arn:aws:lambda:{}:{}:function:{}-invalidate_token'.format(aws_region, aws_account, APPLICATION_NAME)}])
     response = lambda_function.add_permission(
         Action='lambda:InvokeFunction',
         FunctionName='{}-invalidate_token'.format(APPLICATION_NAME),
