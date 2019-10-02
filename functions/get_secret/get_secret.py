@@ -7,7 +7,7 @@ import os
 
 APPLICATION_NAME=os.environ.get('APPLICATION_NAME')
 dynamodb = resource("dynamodb")
-secrets_table = dynamodb.Table('{}Secrets'.format(APPLICATION_NAME)
+secrets_table = dynamodb.Table('{}Secrets'.format(APPLICATION_NAME))
 
 def handler(event, context):
 
@@ -71,9 +71,12 @@ def query_secret(secret_title):
 
 def decrypt_secret(item):
     secret = boto3.client('lambda').invoke(
-        FunctionName='{}-decrypt_secret'.format(os.environ.get('APPLICATION_NAME'),
-        Payload=json.dumps({'secret': item['secret']})
-    )['Payload'].read().decode('utf-8')
+        FunctionName='{}-decrypt_secret'.format(
+            os.environ.get('APPLICATION_NAME'),
+            Payload=json.dumps({'secret': item['secret']})
+        )['Payload'].read().decode('utf-8')
+    )
+
     print(secret)
     item['secret'] = secret
     return item
