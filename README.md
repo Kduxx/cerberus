@@ -29,11 +29,6 @@ npm install
 4. After installing, you will need a user with some specific permissions. To do it, you can run the script located on root of this project.
 
     You can do it using an existing user by running:
-
-    ```shell
-    python configure_permissions.py --new-user
-    ```
-    Or with an existing user:
     ```bash
     python confgure_permission.py --user {username}
     ```
