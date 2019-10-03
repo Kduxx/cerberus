@@ -184,13 +184,7 @@ resources:
             Principal:
               AWS: '*'
             Action:
-            - 'kms:Encrypt'
-            - 'kms:Decrypt'
-            - 'kms:ReEncrypt*'
-            - 'kms:GenerateDataKey*'
-            - 'kms:CreateGrant'
-            - 'kms:ListGrants'
-            - 'kms:DescribeKey'
+            - 'kms:*'
             Resource: '*'
     CerberusKeyAlias:
       DeletionPolicy: Retain
