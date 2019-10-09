@@ -25,6 +25,8 @@ provider:
 plugins:
   - serverless-domain-manager
   - serverless-pseudo-parameters
+  - serverless-plugin-additional-stacks
+
 package:
   individually: true
   exclude:
@@ -32,6 +34,49 @@ package:
 
 custom:
   variables: ${file(variables.yaml)}
+  additionalStacks:
+    permanentResources:
+      Deploy: After
+      StackName: CerberusPermanentResources
+      Resources:
+        CerberusTable:
+          Type: AWS::DynamoDB::Table
+          Properties:
+            TableName: ${self:service}Secrets
+            AttributeDefinitions:
+              - AttributeName: title
+                AttributeType: S
+            KeySchema:
+              - AttributeName: title
+                KeyType: HASH
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+        CerberusProtectionKey:
+          Type: AWS::KMS::Key
+          DeletionPolicy: Retain
+          Description: "The key used to encrypt and decerypt cerberus secrets"
+          Properties:
+            KeyPolicy:
+              Version: '2012-10-17'
+              Statement:
+              - Effect: Allow
+                Principal:
+                  AWS: '*'
+                Action: 'kms:*'
+                Resource: '*'
+              - Effect: Allow
+                Principal:
+                  AWS: '*'
+                Action:
+                - 'kms:*'
+                Resource: '*'
+        CerberusKeyAlias:
+          DeletionPolicy: Retain
+          Type: 'AWS::KMS::Alias'
+          Properties:
+            AliasName: !Sub 'alias/${self:service}ProtectionKey'
+            TargetKeyId: !Ref CerberusProtectionKey
   customDomain:
     domainName: ${self:custom.variables.domain_name}
     certificateName: ${self:custom.variables.certificate_name}
@@ -154,41 +199,3 @@ resources:
                   Action:
                     - "kms:*"
                   Resource: "*"
-    CerberusTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:service}Secrets
-        AttributeDefinitions:
-          - AttributeName: title
-            AttributeType: S
-        KeySchema:
-          - AttributeName: title
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-    CerberusKey:
-      Type: AWS::KMS::Key
-      DeletionPolicy: Retain
-      Description: "The key used to encrypt and decerypt cerberus secrets"
-      Properties:
-        KeyPolicy:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Principal:
-              AWS: !Sub 'arn:aws:iam::#{AWS::AccountId}:root'
-            Action: 'kms:*'
-            Resource: '*'
-          - Effect: Allow
-            Principal:
-              AWS: '*'
-            Action:
-            - 'kms:*'
-            Resource: '*'
-    CerberusKeyAlias:
-      DeletionPolicy: Retain
-      Type: 'AWS::KMS::Alias'
-      Properties:
-        AliasName: !Sub 'alias/${self:service}Key'
-        TargetKeyId: !Ref CerberusKey
