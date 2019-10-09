@@ -1,0 +1,6 @@
+domain_name: ''
+certificate_name: ''
+create_route53_record: false
+endpoint_type: 'regional'
+enable_custom_domain: false
+
