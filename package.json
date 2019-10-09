@@ -1,0 +1,16 @@
+{
+  "name": "LinaPWM",
+  "description": "",
+  "version": "0.1.0",
+  "dependencies": {
+    "serverless": "^1.45.1",
+    "serverless-domain-manager": "^3.2.2",
+    "serverless-plugin-additional-stacks": "^1.2.0"
+  },
+  "devDependencies": {
+    "serverless-iam-roles-per-function": "^2.0.0",
+    "serverless-offline": "^4.9.4",
+    "serverless-pseudo-parameters": "^2.4.0",
+    "serverless-python-requirements": "^4.3.0"
+  }
+}
