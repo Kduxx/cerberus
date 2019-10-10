@@ -62,7 +62,7 @@ custom:
               Statement:
               - Effect: Allow
                 Principal:
-                  AWS: '*'
+                  AWS: !Sub '*'
                 Action: 'kms:*'
                 Resource: '*'
               - Effect: Allow
