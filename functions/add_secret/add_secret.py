@@ -113,13 +113,15 @@ def handler(event, context):
 def secret_exists(secret_title):
 
     function_name = '{}-get_secret'.format(os.environ.get('APPLICATION_NAME'))
-    secret = boto3.client('lambda').invoke(
+    secrets = json.loads(
+        boto3.client('lambda').invoke(
         FunctionName=function_name,
         Payload=json.dumps({"queryStringParameters": {"secret_title": secret_title}})
-    )['Payload'].read().decode('utf-8')
+        )['Payload'].read().decode('utf-8')
+    )['body']
 
-    print(json.loads(secret))
-    return True
+    secrets = json.loads(secrets)['RequestResult']['FoundSecrets']
+    return len(secrets) > 0
 
 def add_secret(title, secret=None, description=None, username=None):
 
