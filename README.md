@@ -65,4 +65,4 @@ When you deploy this project, you will have to following resources on your aws a
 
 # Recomendation
 
-To use this project in its best, I recommend you to use the [`cerberus-cli](https://github.com/Caduedu14/cerberus-cli) project which is gonna give you a pretty command line interface to use this project using your linux terminal.
+To use this project in its best, I recommend you to use the [`[cerberusctl](https://github.com/Caduedu14/cerberusctl) project which is gonna give you a pretty command line interface to use this project using your linux terminal.
